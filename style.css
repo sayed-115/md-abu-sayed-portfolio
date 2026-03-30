@@ -25,6 +25,10 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    /* Force hide on HTML too */
+    width: 100%;
+    max-width: 100vw;
 }
 
 body {
@@ -33,7 +37,11 @@ body {
     color: var(--text-light);
     line-height: 1.6;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
 }
+
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -468,6 +476,7 @@ ul {
     opacity: 0.5;
 }
 
+/* 6 Floating Badges Distribution */
 .floating-badge {
     position: absolute;
     width: 50px;
@@ -478,28 +487,63 @@ ul {
     align-items: center;
     font-size: 1.5rem;
     animation: float 6s infinite alternate ease-in-out;
+    z-index: 2;
+    /* Keeps them above the image */
 }
 
+/* ================= LEFT SIDE ================= */
+/* JS - Top Left */
 .badge-1 {
     top: 10%;
-    left: -20px;
+    left: -25px;
     color: #f7df1e;
     animation-delay: 0s;
 }
 
+/* Code - Mid Left */
+.badge-3 {
+    top: calc(50% - 25px);
+    /* Dead center vertically */
+    left: -25px;
+    color: var(--primary);
+    animation-delay: 2s;
+}
+
+/* Globe - Bottom Left */
+.badge-5 {
+    bottom: 10%;
+    left: -25px;
+    color: #2ed573;
+    animation-delay: 1.5s;
+}
+
+
+/* ================= RIGHT SIDE ================= */
+/* Rocket - Top Right */
+.badge-4 {
+    top: 10%;
+    right: -25px;
+    color: #ff4757;
+    animation-delay: 0.5s;
+}
+
+/* Users - Mid Right */
+.badge-6 {
+    top: calc(50% - 25px);
+    /* Dead center vertically */
+    right: -25px;
+    color: #ffa502;
+    animation-delay: 2.5s;
+}
+
+/* Brain - Bottom Right */
 .badge-2 {
-    bottom: 20%;
+    bottom: 10%;
     right: -25px;
     color: var(--secondary);
     animation-delay: 1s;
 }
 
-.badge-3 {
-    top: 50%;
-    left: -30px;
-    color: var(--primary);
-    animation-delay: 2s;
-}
 
 /* Add this new rule for your image */
 .profile-img {
@@ -1180,44 +1224,83 @@ ul {
 }
 
 @media (max-width: 768px) {
+
     /* 1. Navbar Mobile Fixes (This was in your old code) */
     .nav-links {
-        position: absolute; top: 100%; left: 0; width: 100%;
-        background: var(--bg-dark); border: 1px solid var(--glass-border);
-        border-radius: 1rem; padding: 1rem; flex-direction: column; gap: 10px; display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: var(--bg-dark);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        padding: 1rem;
+        flex-direction: column;
+        gap: 10px;
+        display: none;
     }
-    .nav-links.active { display: flex; }
-    .nav-actions .btn { display: none; }
-    .hamburger { display: block; }
-    
+
+    .nav-links.active {
+        display: flex;
+    }
+
+    .nav-actions .btn {
+        display: none;
+    }
+
+    .hamburger {
+        display: block;
+    }
+
     /* 2. Typography & Typing Effect Fixes (NEW: Stops the up/down bouncing!) */
-    .name { 
-        font-size: 2.2rem; 
-        word-wrap: break-word; 
+    .name {
+        font-size: 2.2rem;
+        word-wrap: break-word;
         line-height: 1.2;
     }
-    .typing-container { 
-        font-size: 1.2rem; 
-        min-height: 60px; /* Permanent space stops the up/down jump */
-        display: flex; flex-wrap: wrap; justify-content: center; width: 100%;
+
+    /* Stop the typing effect from pushing the screen right */
+    .typing-container {
+        font-size: 1.2rem;
+        min-height: 60px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        max-width: 90vw;
+        /* Forces it to stay safely inside the screen bounds */
+        margin-left: auto;
+        margin-right: auto;
+        white-space: normal;
+        /* Forces long words to wrap instead of stretch */
     }
+
     .hero-content {
-        text-align: center; width: 100%; overflow: hidden;
+        text-align: center;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        /* Extra layer of protection */
+        box-sizing: border-box;
     }
-    .section-padding { padding: 80px 5%; }
-    
+
+    .section-padding {
+        padding: 80px 5%;
+    }
+
     /* 3. Grid Fixes (NEW: Stops the left/right stretching!) */
     .about-cards,
     .skills-grid,
     .projects-grid,
     .contact-grid {
-        grid-template-columns: 1fr; /* Forces exactly one column on mobile */
+        grid-template-columns: 1fr;
+        /* Forces exactly one column on mobile */
     }
 
     /* 4. CV Modal Mobile Fix (NEW: Keeps the PDF from breaking the screen) */
     .cv-scroll-container {
         padding: 1rem;
-        overflow: auto; 
+        overflow: auto;
         -webkit-overflow-scrolling: touch;
     }
 }

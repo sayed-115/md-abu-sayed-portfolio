@@ -316,12 +316,55 @@ document.addEventListener("DOMContentLoaded", () => {
   initParticles();
   animateParticles();
 
-  /* --- 9. Simple Form Prevent Default --- */
-  document.getElementById("contact-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const status = document.getElementById("form-status");
-    status.innerHTML = `<span class="text-primary"><i class="fa-solid fa-circle-check"></i> Message simulated successfully! (Integrate EmailJS here)</span>`;
-    e.target.reset();
-    setTimeout(() => (status.innerHTML = ""), 5000);
-  });
+     /* --- 9. EmailJS Form Integration --- */
+    // Initialize EmailJS with your Public Key
+    emailjs.init("PqoyoNkEI-ns7eUZ7"); // <-- PASTE YOUR PUBLIC KEY HERE
+
+    const contactForm = document.getElementById('contact-form');
+    const formStatus = document.getElementById('form-status');
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 1. Change button to loading state
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...';
+        submitBtn.disabled = true;
+
+        // 2. Collect the data from your form
+        const templateParams = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            subject: document.getElementById('subject').value,
+            message: document.getElementById('message').value,
+        };
+
+        // 3. Send the email!
+        // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your actual IDs
+        emailjs.send('service_iig4zlp','__ejs-test-mail-service__'
+, templateParams)
+            .then(function(response) {
+                // Success!
+                formStatus.innerHTML = `<span class="text-primary"><i class="fa-solid fa-circle-check"></i> Message sent successfully!</span>`;
+                contactForm.reset(); // Clear the form
+                
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => formStatus.innerHTML = '', 5000);
+            }, function(error) {
+                // Failed :(
+                formStatus.innerHTML = `<span style="color: #ef4444;"><i class="fa-solid fa-circle-xmark"></i> Failed to send message. Please try again.</span>`;
+                
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                console.error('EmailJS Error:', error);
+            });
+    });
 });
+
+
