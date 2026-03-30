@@ -342,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 3. Send the email!
         // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your actual IDs
-        emailjs.send('service_iig4zlp','__ejs-test-mail-service__'
+        emailjs.send('service_iig4zlp','template_yf49mq4'
 , templateParams)
             .then(function(response) {
                 // Success!
