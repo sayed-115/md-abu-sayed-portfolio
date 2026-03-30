@@ -1180,37 +1180,44 @@ ul {
 }
 
 @media (max-width: 768px) {
+    /* 1. Navbar Mobile Fixes (This was in your old code) */
     .nav-links {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background: var(--bg-dark);
-        border: 1px solid var(--glass-border);
-        border-radius: 1rem;
+        position: absolute; top: 100%; left: 0; width: 100%;
+        background: var(--bg-dark); border: 1px solid var(--glass-border);
+        border-radius: 1rem; padding: 1rem; flex-direction: column; gap: 10px; display: none;
+    }
+    .nav-links.active { display: flex; }
+    .nav-actions .btn { display: none; }
+    .hamburger { display: block; }
+    
+    /* 2. Typography & Typing Effect Fixes (NEW: Stops the up/down bouncing!) */
+    .name { 
+        font-size: 2.2rem; 
+        word-wrap: break-word; 
+        line-height: 1.2;
+    }
+    .typing-container { 
+        font-size: 1.2rem; 
+        min-height: 60px; /* Permanent space stops the up/down jump */
+        display: flex; flex-wrap: wrap; justify-content: center; width: 100%;
+    }
+    .hero-content {
+        text-align: center; width: 100%; overflow: hidden;
+    }
+    .section-padding { padding: 80px 5%; }
+    
+    /* 3. Grid Fixes (NEW: Stops the left/right stretching!) */
+    .about-cards,
+    .skills-grid,
+    .projects-grid,
+    .contact-grid {
+        grid-template-columns: 1fr; /* Forces exactly one column on mobile */
+    }
+
+    /* 4. CV Modal Mobile Fix (NEW: Keeps the PDF from breaking the screen) */
+    .cv-scroll-container {
         padding: 1rem;
-        flex-direction: column;
-        gap: 10px;
-        display: none;
-    }
-
-    .nav-links.active {
-        display: flex;
-    }
-
-    .nav-actions .btn {
-        display: none;
-    }
-
-    .hamburger {
-        display: block;
-    }
-
-    .name {
-        font-size: 2.5rem;
-    }
-
-    .section-padding {
-        padding: 80px 5%;
+        overflow: auto; 
+        -webkit-overflow-scrolling: touch;
     }
 }
