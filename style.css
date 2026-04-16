@@ -244,6 +244,14 @@ ul {
                 border-color 0.3s ease;
 }
 
+/* Hide custom cursor on mobile/touch screens */
+@media (pointer: coarse) {
+    #cursor-dot,
+    #cursor-outline {
+        display: none !important;
+    }
+}
+
 /* =========================================
    Glassmorphism System
    ========================================= */
