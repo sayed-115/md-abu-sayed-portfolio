@@ -1,9 +1,85 @@
 document.addEventListener("DOMContentLoaded", () => {
-  /* --- 1. Mouse Glow Effect --- */
-  const glow = document.getElementById("mouse-glow");
+  /* --- 0. Preloader --- */
+  const preloader = document.getElementById("preloader");
+  let minimumTimePassed = false;
+  let pageLoaded = false;
+
+  function hidePreloader() {
+    if (minimumTimePassed && pageLoaded && preloader) {
+      preloader.style.opacity = "0";
+      preloader.style.visibility = "hidden";
+    }
+  }
+
+  // Ensure preloader shows for at least 1.5 seconds for the animation to play
+  setTimeout(() => {
+    minimumTimePassed = true;
+    hidePreloader();
+  }, 1500);
+
+  window.addEventListener("load", () => {
+    pageLoaded = true;
+    hidePreloader();
+  });
+  
+  // Failsafe in case window.load already fired
+  if (document.readyState === "complete") {
+    pageLoaded = true;
+    hidePreloader();
+  }
+
+  /* --- 1. Custom Mouse Cursor --- */
+  const cursorDot = document.getElementById("cursor-dot");
+  const cursorOutline = document.getElementById("cursor-outline");
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let outlineX = mouseX;
+  let outlineY = mouseY;
+
   document.addEventListener("mousemove", (e) => {
-    glow.style.left = e.clientX + "px";
-    glow.style.top = e.clientY + "px";
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    
+    if (cursorDot) {
+      cursorDot.style.left = mouseX + "px";
+      cursorDot.style.top = mouseY + "px";
+    }
+  });
+
+  function animateOutline() {
+    if (cursorOutline) {
+      let distX = mouseX - outlineX;
+      let distY = mouseY - outlineY;
+      
+      outlineX += distX * 0.15;
+      outlineY += distY * 0.15;
+      
+      cursorOutline.style.left = outlineX + "px";
+      cursorOutline.style.top = outlineY + "px";
+    }
+    requestAnimationFrame(animateOutline);
+  }
+  animateOutline();
+
+  const clickables = document.querySelectorAll('a, button, input, textarea, .glass-card, .fa-brands, .fa-solid');
+  clickables.forEach((el) => {
+    el.addEventListener("mouseenter", () => {
+      if(cursorOutline) {
+        cursorOutline.style.width = "60px";
+        cursorOutline.style.height = "60px";
+        cursorOutline.style.backgroundColor = "rgba(56, 189, 248, 0.1)";
+        cursorOutline.style.borderColor = "var(--secondary)";
+      }
+    });
+    el.addEventListener("mouseleave", () => {
+      if(cursorOutline) {
+        cursorOutline.style.width = "40px";
+        cursorOutline.style.height = "40px";
+        cursorOutline.style.backgroundColor = "transparent";
+        cursorOutline.style.borderColor = "var(--primary)";
+      }
+    });
   });
 
   /* --- 2. Scroll Progress & Sticky Navbar --- */
@@ -210,100 +286,109 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  let mouse = { x: null, y: null, radius: 150 };
+  let mouseState = { x: null, y: null, radius: 150 };
 
   window.addEventListener("mousemove", (event) => {
-    mouse.x = event.x;
-    mouse.y = event.y;
+    mouseState.x = event.clientX;
+    mouseState.y = event.clientY;
+  });
+
+  window.addEventListener("mouseout", () => {
+    mouseState.x = null;
+    mouseState.y = null;
   });
 
   class Particle {
-    constructor(x, y, directionX, directionY, size, color) {
+    constructor(x, y, size, color, speedY) {
       this.x = x;
       this.y = y;
-      this.directionX = directionX;
-      this.directionY = directionY;
       this.size = size;
+      this.baseSize = size;
       this.color = color;
+      this.speedY = speedY;
+      this.speedX = (Math.random() - 0.5) * 0.3; // Slight horizontal drift
     }
     draw() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
       ctx.fillStyle = this.color;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = this.color;
       ctx.fill();
+      ctx.shadowBlur = 0; // reset
     }
     update() {
-      if (this.x > canvas.width || this.x < 0)
-        this.directionX = -this.directionX;
-      if (this.y > canvas.height || this.y < 0)
-        this.directionY = -this.directionY;
+      // Antigravity drift upwards
+      this.y -= this.speedY;
+      this.x += this.speedX;
 
-      // Collision detection - mouse position / particle position
-      let dx = mouse.x - this.x;
-      let dy = mouse.y - this.y;
-      let distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Move particles away from mouse
-      if (distance < mouse.radius + this.size) {
-        if (mouse.x < this.x && this.x < canvas.width - this.size * 10)
-          this.x += 1;
-        if (mouse.x > this.x && this.x > this.size * 10) this.x -= 1;
-        if (mouse.y < this.y && this.y < canvas.height - this.size * 10)
-          this.y += 1;
-        if (mouse.y > this.y && this.y > this.size * 10) this.y -= 1;
+      // Wrap around screen seamlessly
+      if (this.y < 0 - this.size * 2) {
+        this.y = canvas.height + this.size * 2;
+        this.x = Math.random() * canvas.width;
+      }
+      if (this.x > canvas.width + this.size * 2 || this.x < 0 - this.size * 2) {
+        this.x = Math.random() * canvas.width;
       }
 
-      this.x += this.directionX;
-      this.y += this.directionY;
+      // Mouse interaction (repel gently)
+      if (mouseState.x != null && mouseState.y != null) {
+        let dx = mouseState.x - this.x;
+        let dy = mouseState.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < mouseState.radius) {
+          const forceDirectionX = dx / distance;
+          const forceDirectionY = dy / distance;
+          const force = (mouseState.radius - distance) / mouseState.radius;
+          
+          this.x -= forceDirectionX * force * 2;
+          this.y -= forceDirectionY * force * 2;
+          
+          // Glow effect when close to mouse
+          if(this.size < this.baseSize * 3) {
+             this.size += 0.2;
+          }
+        } else {
+          if (this.size > this.baseSize) {
+            this.size -= 0.1;
+          }
+        }
+      } else {
+         if (this.size > this.baseSize) {
+            this.size -= 0.1;
+         }
+      }
+
       this.draw();
     }
   }
 
   function initParticles() {
     particlesArray = [];
-    let numberOfParticles = (canvas.height * canvas.width) / 12000;
+    let numberOfParticles = (canvas.height * canvas.width) / 6000;
     for (let i = 0; i < numberOfParticles; i++) {
-      let size = Math.random() * 2 + 1;
-      let x = Math.random() * (innerWidth - size * 2 - size * 2) + size * 2;
-      let y = Math.random() * (innerHeight - size * 2 - size * 2) + size * 2;
-      let directionX = Math.random() * 1 - 0.5;
-      let directionY = Math.random() * 1 - 0.5;
-      let color = "rgba(255, 255, 255, 0.2)";
+      let size = Math.random() * 2 + 0.5;
+      let x = Math.random() * canvas.width;
+      let y = Math.random() * canvas.height;
+      let speedY = Math.random() * 0.8 + 0.3; // Move up
+      
+      // Cosmic colors for antigravity look
+      let r = Math.random();
+      let color = r > 0.85 ? "rgba(56, 189, 248, 0.8)" : r > 0.7 ? "rgba(124, 109, 255, 0.8)" : "rgba(255, 255, 255, 0.5)";
+      
       particlesArray.push(
-        new Particle(x, y, directionX, directionY, size, color),
+        new Particle(x, y, size, color, speedY)
       );
     }
   }
 
   function animateParticles() {
     requestAnimationFrame(animateParticles);
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Keep transparent for the gradient background
 
     for (let i = 0; i < particlesArray.length; i++) {
-      particlesArray[i].update();
-    }
-    connectParticles();
-  }
-
-  function connectParticles() {
-    let opacityValue = 1;
-    for (let a = 0; a < particlesArray.length; a++) {
-      for (let b = a; b < particlesArray.length; b++) {
-        let distance =
-          (particlesArray[a].x - particlesArray[b].x) *
-            (particlesArray[a].x - particlesArray[b].x) +
-          (particlesArray[a].y - particlesArray[b].y) *
-            (particlesArray[a].y - particlesArray[b].y);
-        if (distance < (canvas.width / 10) * (canvas.height / 10)) {
-          opacityValue = 1 - distance / 20000;
-          ctx.strokeStyle = `rgba(56, 189, 248, ${opacityValue * 0.2})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-          ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-          ctx.stroke();
-        }
-      }
+        particlesArray[i].update();
     }
   }
 
