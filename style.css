@@ -59,12 +59,12 @@ a, button, input, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--glass-border);
+    background: linear-gradient(180deg, var(--primary), var(--secondary));
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary);
+    background: linear-gradient(180deg, var(--secondary), var(--primary));
 }
 
 /* Typography */
@@ -166,56 +166,17 @@ ul {
 /* =========================================
    Backgrounds & Effects
    ========================================= */
-#particle-canvas {
+/* Background Holographic Grid */
+/* Cyber-Security Hexagon Matrix Background */
+#hex-canvas {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: -2;
+    background: radial-gradient(circle at center, #0a0f1c 20%, #050810 100%);
     pointer-events: none;
-}
-
-.aurora-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.4;
-    animation: float 10s infinite alternate ease-in-out;
-}
-
-.orb-1 {
-    width: 400px;
-    height: 400px;
-    background: rgba(56, 189, 248, 0.15);
-    top: -100px;
-    left: -100px;
-}
-
-.orb-2 {
-    width: 300px;
-    height: 300px;
-    background: rgba(124, 109, 255, 0.15);
-    bottom: -50px;
-    right: -50px;
-    animation-delay: -5s;
-}
-
-@keyframes float {
-    100% {
-        transform: translate(50px, 50px);
-    }
 }
 
 #cursor-dot {
@@ -227,6 +188,7 @@ ul {
     pointer-events: none;
     z-index: 10000;
     transform: translate(-50%, -50%);
+    transition: opacity 0.2s ease;
 }
 
 #cursor-outline {
@@ -241,7 +203,8 @@ ul {
     transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
                 height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
                 background-color 0.3s ease,
-                border-color 0.3s ease;
+                border-color 0.3s ease,
+                opacity 0.2s ease;
 }
 
 /* Hide custom cursor on mobile/touch screens */
@@ -793,9 +756,11 @@ ul {
 }
 
 .pill:hover {
-    background: var(--primary);
-    color: var(--bg-dark);
-    border-color: var(--primary);
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+    transform: translateY(-2px);
 }
 
 /* Projects Section */
@@ -939,6 +904,7 @@ ul {
 /* Form */
 .form-group {
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
 .form-group input,
@@ -958,6 +924,30 @@ ul {
     outline: none;
     border-color: var(--primary);
     background: rgba(0, 0, 0, 0.4);
+}
+
+/* Floating Label Styles */
+.form-group.floating-label label {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    color: var(--text-muted);
+    transition: var(--transition);
+    pointer-events: none;
+    background: transparent;
+    padding: 0 4px;
+}
+
+.form-group.floating-label input:focus ~ label,
+.form-group.floating-label input:not(:placeholder-shown) ~ label,
+.form-group.floating-label textarea:focus ~ label,
+.form-group.floating-label textarea:not(:placeholder-shown) ~ label {
+    top: -0.6rem;
+    left: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--primary);
+    background: var(--bg-dark);
+    border-radius: 4px;
 }
 
 .w-100 {
@@ -984,13 +974,13 @@ ul {
    ========================================= */
 .fade-up {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transform: translateY(40px) scale(0.98);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .fade-up.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .delay-1 {

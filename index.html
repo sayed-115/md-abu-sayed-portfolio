@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Md Abu Sayed - Computer Science Student, Web Developer, and AI Enthusiast from Bangladesh. Specializing in modern web interfaces and machine learning.">
     <title>Md Abu Sayed | Portfolio</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -27,11 +28,7 @@
             <div class="typing-init">INITIALIZING<span class="loading-dots"></span></div>
         </div>
     </div>
-    <canvas id="particle-canvas"></canvas>
-    <div class="aurora-bg">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-    </div>
+    <canvas id="hex-canvas"></canvas>
     <div id="cursor-dot"></div>
     <div id="cursor-outline"></div>
 
@@ -56,8 +53,8 @@
 
             <div class="nav-actions">
                 <a href="https://www.linkedin.com/in/md-abu-sayed-00751a281/" target="_blank"
-                    class="btn btn-primary btn-sm">Hire Me</a>
-                <button class="hamburger" id="hamburger">
+                    class="btn btn-primary btn-sm" aria-label="Hire me on LinkedIn">Hire Me</a>
+                <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu">
                     <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
@@ -328,31 +325,35 @@
                     </div>
 
                     <div class="social-links">
-                        <a href="https://github.com/eii-sayed" target="_blank" class="social-icon glass"><i
+                        <a href="https://github.com/eii-sayed" target="_blank" class="social-icon glass" aria-label="GitHub Profile"><i
                                 class="fa-brands fa-github"></i></a>
                         <a href="https://www.linkedin.com/in/md-abu-sayed-00751a281/" target="_blank"
-                            class="social-icon glass"><i class="fa-brands fa-linkedin-in"></i></a>
-                        <a href="https://www.facebook.com/abusayedsk99" target="_blank" class="social-icon glass"><i
+                            class="social-icon glass" aria-label="LinkedIn Profile"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="https://www.facebook.com/abusayedsk99" target="_blank" class="social-icon glass" aria-label="Facebook Profile"><i
                                 class="fa-brands fa-facebook-f"></i></a>
-                        <a href="https://www.instagram.com/_me_sayed_/" target="_blank" class="social-icon glass"><i
+                        <a href="https://www.instagram.com/_me_sayed_/" target="_blank" class="social-icon glass" aria-label="Instagram Profile"><i
                                 class="fa-brands fa-instagram"></i></a>
-                        <a href="https://wa.me/8801997058608" target="_blank" class="social-icon glass"><i
+                        <a href="https://wa.me/8801997058608" target="_blank" class="social-icon glass" aria-label="WhatsApp Contact"><i
                                 class="fa-brands fa-whatsapp"></i></a>
                     </div>
                 </div>
 
                 <form id="contact-form" class="glass-card fade-up delay-1">
-                    <div class="form-group">
-                        <input type="text" id="name" required placeholder="Your Name">
+                    <div class="form-group floating-label">
+                        <input type="text" id="name" required placeholder=" ">
+                        <label for="name">Your Name</label>
                     </div>
-                    <div class="form-group">
-                        <input type="email" id="email" required placeholder="Your Email">
+                    <div class="form-group floating-label">
+                        <input type="email" id="email" required placeholder=" ">
+                        <label for="email">Your Email</label>
                     </div>
-                    <div class="form-group">
-                        <input type="text" id="subject" required placeholder="Subject">
+                    <div class="form-group floating-label">
+                        <input type="text" id="subject" required placeholder=" ">
+                        <label for="subject">Subject</label>
                     </div>
-                    <div class="form-group">
-                        <textarea id="message" rows="5" required placeholder="Your Message"></textarea>
+                    <div class="form-group floating-label">
+                        <textarea id="message" rows="5" required placeholder=" "></textarea>
+                        <label for="message">Your Message</label>
                     </div>
                     <button type="submit" class="btn btn-gradient w-100">Send Message <i
                             class="fa-regular fa-paper-plane"></i></button>
@@ -373,7 +374,7 @@
                 <div class="modal-actions">
                     <button id="download-pdf-btn" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download
                         PDF</button>
-                    <button id="close-cv-btn" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                    <button id="close-cv-btn" class="btn-close" aria-label="Close Preview"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
 
@@ -499,6 +500,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
     <script src="script.js"></script>
 </body>
 

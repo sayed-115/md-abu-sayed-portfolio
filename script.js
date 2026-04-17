@@ -47,17 +47,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.addEventListener("mouseleave", () => {
+    if (cursorDot) cursorDot.style.opacity = "0";
+    if (cursorOutline) cursorOutline.style.opacity = "0";
+  });
+
+  document.addEventListener("mouseenter", () => {
+    if (cursorDot) cursorDot.style.opacity = "1";
+    if (cursorOutline) cursorOutline.style.opacity = "1";
+  });
+
   function animateOutline() {
+    let distX = mouseX - outlineX;
+    let distY = mouseY - outlineY;
+    
+    outlineX += distX * 0.15;
+    outlineY += distY * 0.15;
+    
     if (cursorOutline) {
-      let distX = mouseX - outlineX;
-      let distY = mouseY - outlineY;
-      
-      outlineX += distX * 0.15;
-      outlineY += distY * 0.15;
-      
       cursorOutline.style.left = outlineX + "px";
       cursorOutline.style.top = outlineY + "px";
     }
+
     requestAnimationFrame(animateOutline);
   }
   animateOutline();
@@ -82,10 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  /* --- 2. Scroll Progress & Sticky Navbar --- */
+  /* --- 2. Scroll Progress --- */
   const progressBar = document.getElementById("scroll-progress");
-  const sections = document.querySelectorAll("section");
-  const navLinks = document.querySelectorAll(".nav-link");
 
   window.addEventListener("scroll", () => {
     // Progress Bar
@@ -93,25 +102,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const docHeight =
       document.documentElement.scrollHeight - window.innerHeight;
     const scrollPercent = (scrollTop / docHeight) * 100;
-    progressBar.style.width = scrollPercent + "%";
-
-    // Active Nav Link
-    let current = "";
-    sections.forEach((section) => {
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.clientHeight;
-      if (scrollY >= sectionTop - 200) {
-        current = section.getAttribute("id");
-      }
-    });
-
-    navLinks.forEach((link) => {
-      link.classList.remove("active");
-      if (link.getAttribute("href") === `#${current}`) {
-        link.classList.add("active");
-      }
-    });
+    if (progressBar) progressBar.style.width = scrollPercent + "%";
   });
+
+  /* --- 2b. Active Nav Link (Intersection Observer) --- */
+  const sections = document.querySelectorAll("section");
+  const navLinks = document.querySelectorAll(".nav-link");
+
+  const navObserverOptions = {
+    threshold: 0.3,
+    rootMargin: "-10% 0px -50% 0px"
+  };
+
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const currentId = entry.target.getAttribute("id");
+        navLinks.forEach((link) => {
+          link.classList.remove("active");
+          if (link.getAttribute("href") === `#${currentId}`) {
+            link.classList.add("active");
+          }
+        });
+      }
+    });
+  }, navObserverOptions);
+
+  sections.forEach((section) => navObserver.observe(section));
 
   /* --- 3. Mobile Menu Toggle --- */
   const hamburger = document.getElementById("hamburger");
@@ -149,15 +166,15 @@ document.addEventListener("DOMContentLoaded", () => {
       charIndex++;
     }
 
-    let typingSpeed = isDeleting ? 50 : 100;
+    let typingSpeed = isDeleting ? 40 : 80;
 
     if (!isDeleting && charIndex === currentWord.length) {
-      typingSpeed = 2000; // Pause at end of word
+      typingSpeed = 1500; // Pause at end of word
       isDeleting = true;
     } else if (isDeleting && charIndex === 0) {
       isDeleting = false;
       wordIndex = (wordIndex + 1) % words.length;
-      typingSpeed = 500; // Pause before new word
+      typingSpeed = 400; // Pause before new word
     }
 
     setTimeout(type, typingSpeed);
@@ -220,6 +237,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
         githubContainer.insertAdjacentHTML("beforeend", cardHtml);
       });
+
+      // Initialize VanillaTilt on newly added GitHub projects
+      if (typeof VanillaTilt !== 'undefined') {
+        VanillaTilt.init(document.querySelectorAll("#github-projects-container .glass-card"), {
+            max: 5,
+            speed: 400,
+            glare: true,
+            "max-glare": 0.1,
+        });
+      }
     } catch (error) {
       githubContainer.innerHTML =
         '<div class="glass-card empty-state" style="grid-column: 1/-1"><p>Failed to load projects. Please visit my GitHub profile directly.</p></div>';
@@ -278,128 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 
-  /* --- 8. Particle Canvas Background --- */
-  const canvas = document.getElementById("particle-canvas");
-  const ctx = canvas.getContext("2d");
-  let particlesArray = [];
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  let mouseState = { x: null, y: null, radius: 150 };
-
-  window.addEventListener("mousemove", (event) => {
-    mouseState.x = event.clientX;
-    mouseState.y = event.clientY;
-  });
-
-  window.addEventListener("mouseout", () => {
-    mouseState.x = null;
-    mouseState.y = null;
-  });
-
-  class Particle {
-    constructor(x, y, size, color, speedY) {
-      this.x = x;
-      this.y = y;
-      this.size = size;
-      this.baseSize = size;
-      this.color = color;
-      this.speedY = speedY;
-      this.speedX = (Math.random() - 0.5) * 0.3; // Slight horizontal drift
-    }
-    draw() {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-      ctx.fillStyle = this.color;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.shadowBlur = 0; // reset
-    }
-    update() {
-      // Antigravity drift upwards
-      this.y -= this.speedY;
-      this.x += this.speedX;
-
-      // Wrap around screen seamlessly
-      if (this.y < 0 - this.size * 2) {
-        this.y = canvas.height + this.size * 2;
-        this.x = Math.random() * canvas.width;
-      }
-      if (this.x > canvas.width + this.size * 2 || this.x < 0 - this.size * 2) {
-        this.x = Math.random() * canvas.width;
-      }
-
-      // Mouse interaction (repel gently)
-      if (mouseState.x != null && mouseState.y != null) {
-        let dx = mouseState.x - this.x;
-        let dy = mouseState.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < mouseState.radius) {
-          const forceDirectionX = dx / distance;
-          const forceDirectionY = dy / distance;
-          const force = (mouseState.radius - distance) / mouseState.radius;
-          
-          this.x -= forceDirectionX * force * 2;
-          this.y -= forceDirectionY * force * 2;
-          
-          // Glow effect when close to mouse
-          if(this.size < this.baseSize * 3) {
-             this.size += 0.2;
-          }
-        } else {
-          if (this.size > this.baseSize) {
-            this.size -= 0.1;
-          }
-        }
-      } else {
-         if (this.size > this.baseSize) {
-            this.size -= 0.1;
-         }
-      }
-
-      this.draw();
-    }
-  }
-
-  function initParticles() {
-    particlesArray = [];
-    let numberOfParticles = (canvas.height * canvas.width) / 6000;
-    for (let i = 0; i < numberOfParticles; i++) {
-      let size = Math.random() * 2 + 0.5;
-      let x = Math.random() * canvas.width;
-      let y = Math.random() * canvas.height;
-      let speedY = Math.random() * 0.8 + 0.3; // Move up
-      
-      // Cosmic colors for antigravity look
-      let r = Math.random();
-      let color = r > 0.85 ? "rgba(56, 189, 248, 0.8)" : r > 0.7 ? "rgba(124, 109, 255, 0.8)" : "rgba(255, 255, 255, 0.5)";
-      
-      particlesArray.push(
-        new Particle(x, y, size, color, speedY)
-      );
-    }
-  }
-
-  function animateParticles() {
-    requestAnimationFrame(animateParticles);
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Keep transparent for the gradient background
-
-    for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update();
-    }
-  }
-
-  window.addEventListener("resize", () => {
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
-    initParticles();
-  });
-
-  initParticles();
-  animateParticles();
 
      /* --- 9. EmailJS Form Integration --- */
     // Initialize EmailJS with your Public Key
@@ -450,6 +355,134 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error('EmailJS Error:', error);
             });
     });
+
+  /* --- 10. Vanilla Tilt Initialization --- */
+  if (typeof VanillaTilt !== 'undefined') {
+      VanillaTilt.init(document.querySelectorAll(".glass-card"), {
+          max: 4,
+          speed: 400,
+          glare: true,
+          "max-glare": 0.05,
+      });
+  }
+
+  /* --- 11. Cyber-Security Hexagon Matrix Background --- */
+  const canvas = document.getElementById("hex-canvas");
+  if (canvas) {
+      const ctx = canvas.getContext("2d");
+      
+      let hexWidth, hexHeight, hexHorizontalStep, hexVerticalStep, cols, rows;
+      const hexRadius = 35; // Size of hexagons
+      let hexagons = [];
+      
+      class Hexagon {
+          constructor(x, y) {
+              this.x = x;
+              this.y = y;
+              this.targetGlow = 0;
+              this.currentGlow = 0;
+              this.isRandomTarget = false;
+          }
+          
+          draw() {
+              ctx.beginPath();
+              for (let i = 0; i < 6; i++) {
+                  let angle = (Math.PI / 180) * (60 * i - 30);
+                  let px = this.x + hexRadius * Math.cos(angle);
+                  let py = this.y + hexRadius * Math.sin(angle);
+                  if (i === 0) ctx.moveTo(px, py);
+                  else ctx.lineTo(px, py);
+              }
+              ctx.closePath();
+              
+              // Base line faintly visible
+              let strokeAlpha = 0.04 + (this.currentGlow * 0.9);
+              ctx.strokeStyle = `rgba(56, 189, 248, ${strokeAlpha})`;
+              ctx.lineWidth = 1;
+              
+              // Internal subtle fill when glowing
+              if (this.currentGlow > 0.05) {
+                  ctx.fillStyle = `rgba(124, 109, 255, ${this.currentGlow * 0.15})`;
+                  ctx.fill();
+                  ctx.shadowBlur = 15 * this.currentGlow;
+                  ctx.shadowColor = "#38bdf8";
+              } else {
+                  ctx.shadowBlur = 0;
+              }
+              
+              ctx.stroke();
+          }
+          
+          update() {
+              // Diminish glow smoothly
+              if (!this.isRandomTarget) {
+                  this.currentGlow *= 0.92;
+              } else {
+                  this.currentGlow += 0.03;
+                  if (this.currentGlow >= 1) {
+                      this.isRandomTarget = false;
+                  }
+              }
+              
+              // Trigger mouse trail
+              if (mouseX && mouseY) {
+                 let dist = Math.sqrt(Math.pow(mouseX - this.x, 2) + Math.pow(mouseY - this.y, 2));
+                 if (dist < 140) {
+                     this.currentGlow = 0.8;
+                 }
+              }
+              
+              this.draw();
+          }
+      }
+      
+      function initHexagons() {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          hexagons = [];
+          
+          hexWidth = Math.sqrt(3) * hexRadius;
+          hexHeight = 2 * hexRadius;
+          hexHorizontalStep = hexWidth;
+          hexVerticalStep = hexHeight * 0.75;
+          
+          cols = Math.ceil(canvas.width / hexHorizontalStep) + 2;
+          rows = Math.ceil(canvas.height / hexVerticalStep) + 2;
+          
+          for (let r = -1; r < rows; r++) {
+             for (let c = -1; c < cols; c++) {
+                  let x = c * hexHorizontalStep + (r % 2 === 1 ? hexHorizontalStep / 2 : 0);
+                  let y = r * hexVerticalStep;
+                  hexagons.push(new Hexagon(x, y));
+             }
+          }
+      }
+      
+      function animateHexagons() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Trigger random matrix pulses
+          if (Math.random() < 0.03 && hexagons.length > 0) {
+              let randomHex = hexagons[Math.floor(Math.random() * hexagons.length)];
+              if (randomHex.currentGlow < 0.1) {
+                 randomHex.isRandomTarget = true;
+              }
+          }
+          
+          for (let hex of hexagons) {
+              hex.update();
+          }
+          
+          requestAnimationFrame(animateHexagons);
+      }
+      
+      initHexagons();
+      animateHexagons();
+      
+      window.addEventListener("resize", () => {
+         initHexagons();
+      });
+  }
 });
 
 
