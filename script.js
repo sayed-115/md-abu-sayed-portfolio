@@ -36,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let mouseY = window.innerHeight / 2;
   let outlineX = mouseX;
   let outlineY = mouseY;
-
   document.addEventListener("mousemove", (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -68,6 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
       cursorOutline.style.left = outlineX + "px";
       cursorOutline.style.top = outlineY + "px";
     }
+
+
 
     requestAnimationFrame(animateOutline);
   }
@@ -366,123 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  /* --- 11. Cyber-Security Hexagon Matrix Background --- */
-  const canvas = document.getElementById("hex-canvas");
-  if (canvas) {
-      const ctx = canvas.getContext("2d");
-      
-      let hexWidth, hexHeight, hexHorizontalStep, hexVerticalStep, cols, rows;
-      const hexRadius = 35; // Size of hexagons
-      let hexagons = [];
-      
-      class Hexagon {
-          constructor(x, y) {
-              this.x = x;
-              this.y = y;
-              this.targetGlow = 0;
-              this.currentGlow = 0;
-              this.isRandomTarget = false;
-          }
-          
-          draw() {
-              ctx.beginPath();
-              for (let i = 0; i < 6; i++) {
-                  let angle = (Math.PI / 180) * (60 * i - 30);
-                  let px = this.x + hexRadius * Math.cos(angle);
-                  let py = this.y + hexRadius * Math.sin(angle);
-                  if (i === 0) ctx.moveTo(px, py);
-                  else ctx.lineTo(px, py);
-              }
-              ctx.closePath();
-              
-              // Base line faintly visible
-              let strokeAlpha = 0.04 + (this.currentGlow * 0.9);
-              ctx.strokeStyle = `rgba(56, 189, 248, ${strokeAlpha})`;
-              ctx.lineWidth = 1;
-              
-              // Internal subtle fill when glowing
-              if (this.currentGlow > 0.05) {
-                  ctx.fillStyle = `rgba(124, 109, 255, ${this.currentGlow * 0.15})`;
-                  ctx.fill();
-                  ctx.shadowBlur = 15 * this.currentGlow;
-                  ctx.shadowColor = "#38bdf8";
-              } else {
-                  ctx.shadowBlur = 0;
-              }
-              
-              ctx.stroke();
-          }
-          
-          update() {
-              // Diminish glow smoothly
-              if (!this.isRandomTarget) {
-                  this.currentGlow *= 0.92;
-              } else {
-                  this.currentGlow += 0.03;
-                  if (this.currentGlow >= 1) {
-                      this.isRandomTarget = false;
-                  }
-              }
-              
-              // Trigger mouse trail
-              if (mouseX && mouseY) {
-                 let dist = Math.sqrt(Math.pow(mouseX - this.x, 2) + Math.pow(mouseY - this.y, 2));
-                 if (dist < 140) {
-                     this.currentGlow = 0.8;
-                 }
-              }
-              
-              this.draw();
-          }
-      }
-      
-      function initHexagons() {
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
-          hexagons = [];
-          
-          hexWidth = Math.sqrt(3) * hexRadius;
-          hexHeight = 2 * hexRadius;
-          hexHorizontalStep = hexWidth;
-          hexVerticalStep = hexHeight * 0.75;
-          
-          cols = Math.ceil(canvas.width / hexHorizontalStep) + 2;
-          rows = Math.ceil(canvas.height / hexVerticalStep) + 2;
-          
-          for (let r = -1; r < rows; r++) {
-             for (let c = -1; c < cols; c++) {
-                  let x = c * hexHorizontalStep + (r % 2 === 1 ? hexHorizontalStep / 2 : 0);
-                  let y = r * hexVerticalStep;
-                  hexagons.push(new Hexagon(x, y));
-             }
-          }
-      }
-      
-      function animateHexagons() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Trigger random matrix pulses
-          if (Math.random() < 0.03 && hexagons.length > 0) {
-              let randomHex = hexagons[Math.floor(Math.random() * hexagons.length)];
-              if (randomHex.currentGlow < 0.1) {
-                 randomHex.isRandomTarget = true;
-              }
-          }
-          
-          for (let hex of hexagons) {
-              hex.update();
-          }
-          
-          requestAnimationFrame(animateHexagons);
-      }
-      
-      initHexagons();
-      animateHexagons();
-      
-      window.addEventListener("resize", () => {
-         initHexagons();
-      });
-  }
 });
 
 
