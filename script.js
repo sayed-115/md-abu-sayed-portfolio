@@ -94,6 +94,201 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  /* --- 1.5 Dot Matrix Canvas Background --- */
+  const canvas = document.getElementById("dot-matrix-canvas");
+  if (canvas) {
+    const CONFIG = {
+        dotColor: [56, 189, 248],  // var(--primary) RGB
+        dotSize: 1.5,              // Base dot radius in px
+        dotSpacing: 30,            // Grid cell size in px
+        baseAlpha: 0.15,           // Resting dot opacity
+        peakAlpha: 0.9,            // Max opacity at wave crest
+        waveSpeed: 0.002,          // Ripple animation speed
+        waveFreq: 0.015,           // Spatial frequency of the ripple
+        mouseFalloff: 250,         // Cursor influence radius in px
+        sizeBoost: 2.5,            // Dot size multiplier at wave peak
+        clickRipple: true,         // Enable click burst ripples
+        parallaxFactor: 0.32,      // 0 = no drift, 0.5 = strong
+        parallaxAxis: 'xy',        // 'y' = vertical only | 'xy' = slight diagonal
+        parallaxXRatio: 0.12,      // x drift as fraction of y (only for 'xy')
+        depthFade: true,           // fade upper dots as user scrolls
+        depthFadeEnd: 0.55,        // viewport fraction where fade peaks
+        depthFadeMin: 0.35         // minimum alpha multiplier at full scroll
+    };
+
+    const ctx = canvas.getContext('2d', { alpha: true });
+    
+    let width, height;
+    let cols, rows;
+    let isTabActive = true;
+    
+    let time = 0;
+    let lastTime = 0;
+    let clickRipples = [];
+    let scrollRaw = 0;
+    let scrollSmooth = 0;
+
+    // Check for reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // DPR-aware canvas setup
+    function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
+        width = window.innerWidth;
+        height = window.innerHeight;
+        
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        
+        ctx.scale(dpr, dpr);
+        
+        cols = Math.ceil(width / CONFIG.dotSpacing) + 2;
+        rows = Math.ceil(height / CONFIG.dotSpacing) + 2;
+    }
+
+    // Debounced resize listener
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resizeCanvas, 150);
+    });
+
+    // Click Ripple Event
+    window.addEventListener('click', (e) => {
+        if (!CONFIG.clickRipple || prefersReducedMotion) return;
+        const x = e.clientX;
+        const y = e.clientY;
+        clickRipples.push({ x, y, radius: 0, life: 1 });
+    });
+
+    // Scroll tracking
+    window.addEventListener('scroll', () => { scrollRaw = window.scrollY; }, { passive: true });
+
+    // Visibility tracking
+    document.addEventListener('visibilitychange', () => {
+        isTabActive = !document.hidden;
+        if (isTabActive && !prefersReducedMotion) {
+            lastTime = performance.now();
+            requestAnimationFrame(animate);
+        }
+    });
+
+    function animate(now) {
+        if (!isTabActive || prefersReducedMotion) return;
+        
+        const dt = lastTime !== 0 ? (now - lastTime) / 1000 : 0;
+        lastTime = now;
+        
+        time += dt * 1000;
+        scrollSmooth += (scrollRaw - scrollSmooth) * Math.min(1, dt * 8);
+
+        ctx.clearRect(0, 0, width, height);
+        
+        // Update click ripples
+        for (let i = clickRipples.length - 1; i >= 0; i--) {
+            const r = clickRipples[i];
+            r.radius += dt * 1000 * 0.8; // Burst speed
+            r.life -= dt * 1000 * 0.0008; // Fade speed
+            if (r.life <= 0) {
+                clickRipples.splice(i, 1);
+            }
+        }
+
+        const [r, g, b] = CONFIG.dotColor;
+        const sp = CONFIG.dotSpacing;
+        
+        const parallaxY = scrollSmooth * CONFIG.parallaxFactor;
+        const parallaxX = CONFIG.parallaxAxis === 'xy' ? parallaxY * CONFIG.parallaxXRatio : 0;
+        const offsetX = ((parallaxX % sp) + sp) % sp;
+        const offsetY = ((parallaxY % sp) + sp) % sp;
+
+        for (let i = -1; i < cols; i++) {
+            for (let j = -1; j < rows; j++) {
+                const x = i * sp - offsetX;
+                const y = j * sp - offsetY;
+                
+                if (x < -sp || x > width + sp || y < -sp || y > height + sp) continue;
+                
+                // 1. Mouse Interaction (uses mouseX and mouseY from Custom Cursor logic)
+                const dx = x - mouseX;
+                const dy = y - mouseY;
+                const distToMouse = Math.sqrt(dx * dx + dy * dy);
+                
+                let mouseInfluence = 0;
+                if (distToMouse < CONFIG.mouseFalloff) {
+                    // Normalize distance (1 at center, 0 at edge)
+                    const normalizedDist = 1 - (distToMouse / CONFIG.mouseFalloff);
+                    // Add ripple effect based on distance and time
+                    const ripple = Math.sin(distToMouse * CONFIG.waveFreq - time * CONFIG.waveSpeed);
+                    // Remap sin (-1 to 1) to (0 to 1) and apply falloff
+                    mouseInfluence = ((ripple + 1) / 2) * normalizedDist;
+                }
+
+                // 2. Ambient idle animation (diagonal wave)
+                // Very subtle background movement
+                const ambient = (Math.sin((x + y) * 0.005 + time * 0.001) + 1) / 2 * 0.2;
+
+                // 3. Click ripples
+                let burstInfluence = 0;
+                for (const rip of clickRipples) {
+                    const drx = x - rip.x;
+                    const dry = y - rip.y;
+                    const distToBurst = Math.sqrt(drx * drx + dry * dry);
+                    
+                    // Ring thickness
+                    const distanceDiff = Math.abs(distToBurst - rip.radius);
+                    if (distanceDiff < 50) {
+                        const intensity = 1 - (distanceDiff / 50);
+                        burstInfluence += intensity * rip.life;
+                    }
+                }
+
+                // Combine influences
+                let totalInfluence = mouseInfluence + ambient + burstInfluence;
+                totalInfluence = Math.min(Math.max(totalInfluence, 0), 1); // Clamp 0-1
+
+                // After computing alpha, apply depth fade
+                let alphaMult = 1;
+                if (CONFIG.depthFade) {
+                    const scrollProgress = Math.min(1, scrollSmooth / (height * CONFIG.depthFadeEnd));
+                    const topFade = Math.max(0, 1 - (y / height));
+                    alphaMult = 1 - (topFade * scrollProgress * (1 - CONFIG.depthFadeMin));
+                }
+
+                // Calculate final alpha and size
+                const currentAlpha = (CONFIG.baseAlpha + (CONFIG.peakAlpha - CONFIG.baseAlpha) * totalInfluence) * alphaMult;
+                const currentSize = CONFIG.dotSize * (1 + (CONFIG.sizeBoost - 1) * totalInfluence);
+
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${currentAlpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, currentSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Init
+    resizeCanvas();
+    if (!prefersReducedMotion) {
+        lastTime = performance.now();
+        requestAnimationFrame(animate);
+    } else {
+        // Draw static dots once
+        ctx.clearRect(0, 0, width, height);
+        const [r, g, b] = CONFIG.dotColor;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${CONFIG.baseAlpha})`;
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < rows; j++) {
+                ctx.beginPath();
+                ctx.arc(i * CONFIG.dotSpacing, j * CONFIG.dotSpacing, CONFIG.dotSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+  }
+
   /* --- 2. Scroll Progress --- */
   const progressBar = document.getElementById("scroll-progress");
 
@@ -280,12 +475,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const opt = {
       margin: 0,
       filename: "Md_Abu_Sayed_Resume.pdf",
-      image: { type: "jpeg", quality: 1 }, // Max quality
+      image: { type: "jpeg", quality: 0.98 }, // High quality
       html2canvas: {
         scale: 2,
         useCORS: true, // Crucial for rendering the profile image in the PDF
-        allowTaint: true,
-        letterRendering: true,
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
